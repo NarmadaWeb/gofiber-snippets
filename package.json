@@ -1,7 +1,7 @@
 {
   "name": "gofiber-snippets",
   "displayName": "gofiber snippets",
-  "description": "gofiber snippets v2",
+  "description": "gofiber snippets v2 for users go",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.84.0"
