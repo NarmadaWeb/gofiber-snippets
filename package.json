@@ -1,8 +1,8 @@
 {
   "name": "gofiber-snippets",
-  "displayName": "gofiber snippets",
-  "description": "gofiber snippets v2 for users go",
-  "version": "0.0.1",
+  "displayName": "Gofiber snippets",
+  "description": "Gofiber snippets v2 for users go",
+  "version": "0.1.0",
   "publisher": "RajaSunrise",
   "engines": {
     "vscode": "^1.84.0"
