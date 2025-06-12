@@ -1,0 +1,628 @@
+{
+  "Fiber Basic Setup": {
+    "prefix": "fiber-init",
+    "body": [
+      "package main",
+      "",
+      "import (",
+      "\t\"log\"",
+      "",
+      "\t\"github.com/gofiber/fiber/v2\"",
+      "\t\"github.com/gofiber/fiber/v2/middleware/logger\"",
+      ")",
+      "",
+      "func main() {",
+      "\tapp := fiber.New(fiber.Config{",
+      "\t\tPrefork:       false,",
+      "\t\tCaseSensitive: true,",
+      "\t\tStrictRouting: true,",
+      "\t\tServerHeader:  \"Fiber\",",
+      "\t\tAppName:       \"${1:App Name}\",",
+      "\t})",
+      "",
+      "\t// Middleware",
+      "\tapp.Use(logger.New())",
+      "",
+      "\t// Routes",
+      "\tapp.Get(\"/\", func(c *fiber.Ctx) error {",
+      "\t\treturn c.SendString(\"Hello, World!\")",
+      "\t})",
+      "",
+      "\t// Start server",
+      "\tlog.Fatal(app.Listen(\":${2:3000}\"))",
+      "}"
+    ],
+    "description": "Basic Fiber application setup with config and logger middleware"
+  },
+  "Fiber Route Handler": {
+    "prefix": "fiber-handler",
+    "body": [
+      "app.${1|get,post,put,patch,delete|}(\"${2:/path}\", func(c *fiber.Ctx) error {",
+      "\t// Handler logic",
+      "\treturn c.${3|SendString,Send,JSON,Status|}(\"${4:response}\")",
+      "})"
+    ],
+    "description": "Basic route handler with method selection"
+  },
+  "Fiber Group Routes": {
+    "prefix": "fiber-group",
+    "body": [
+      "${1:api} := app.Group(\"/${2:api}\")",
+      "",
+      "${1}.Get(\"/users\", ${3:handlerGetUser}) // GET /${2}/users",
+      "${1}.Post(\"/users\", ${4:handlerCreateUser}) // POST /${2}/users"
+    ],
+    "description": "Route grouping with prefix"
+  },
+  "Fiber Static Files": {
+    "prefix": "fiber-static",
+    "body": [
+      "app.Static(\"/${1:public}\", \"./${2:public}\", fiber.Static{",
+      "\tCompress:      true,",
+      "\tByteRange:     true,",
+      "\tIndex:         \"index.html\",",
+      "\tCacheDuration: 10 * time.Minute,",
+      "\tMaxAge:        3600,",
+      "})"
+    ],
+    "description": "Static file serving with compression and caching"
+  },
+  "Fiber Middleware": {
+    "prefix": "fiber-middleware",
+    "body": [
+      "// Custom middleware",
+      "app.Use(func(c *fiber.Ctx) error {",
+      "\t${1:// Pre-handler logic, e.g., check headers}",
+      "\terr := c.Next()",
+      "\t${2:// Post-handler logic, e.g., modify response}",
+      "\treturn err",
+      "})"
+    ],
+    "description": "Custom middleware structure"
+  },
+  "Fiber Error Handling": {
+    "prefix": "fiber-error",
+    "body": [
+      "app.Use(func(c *fiber.Ctx) error {",
+      "\terr := c.Next()",
+      "",
+      "\tif err != nil {",
+      "\t\tcode := fiber.StatusInternalServerError",
+      "\t\tif e, ok := err.(*fiber.Error); ok {",
+      "\t\t\tcode = e.Code",
+      "\t\t}",
+      "\t\treturn c.Status(code).JSON(fiber.Map{",
+      "\t\t\t\"error\": err.Error(),",
+      "\t\t})",
+      "\t}",
+      "",
+      "\treturn nil",
+      "})"
+    ],
+    "description": "Global error handling middleware for custom and built-in errors"
+  },
+  "Fiber JSON Response": {
+    "prefix": "fiber-json",
+    "body": [
+      "return c.JSON(fiber.Map{",
+      "\t\"success\": true,",
+      "\t\"message\": \"${1:Success message}\",",
+      "\t\"data\":    ${2:dataObject},",
+      "})"
+    ],
+    "description": "Standardized JSON response with dynamic values"
+  },
+  "Fiber Path Params": {
+    "prefix": "fiber-param",
+    "body": [
+      "id := c.Params(\"${1:id}\")",
+      "// Optional: Convert to int",
+      "idInt, err := c.ParamsInt(\"${1:id}\")",
+      "if err != nil {",
+      "\treturn c.Status(fiber.StatusBadRequest).SendString(\"Invalid ID format\")",
+      "}"
+    ],
+    "description": "Get path parameter with optional integer conversion"
+  },
+  "Fiber Query Params": {
+    "prefix": "fiber-query",
+    "body": [
+      "page := c.Query(\"page\", \"1\")",
+      "limit := c.QueryInt(\"limit\", 10)",
+      "search := c.Query(\"search\")"
+    ],
+    "description": "Get query parameters with default values"
+  },
+  "Fiber Body Parser": {
+    "prefix": "fiber-body",
+    "body": [
+      "type ${1:CreateUserRequest} struct {",
+      "\tName  string `json:\"name\"`",
+      "\tEmail string `json:\"email\"`",
+      "}",
+      "",
+      "var body ${1}",
+      "if err := c.BodyParser(&body); err != nil {",
+      "\treturn c.Status(fiber.StatusBadRequest).JSON(fiber.Map{",
+      "\t\t\"error\": \"Cannot parse request body\",",
+      "\t})",
+      "}"
+    ],
+    "description": "Parse request body into a struct"
+  },
+  "Fiber File Upload": {
+    "prefix": "fiber-upload",
+    "body": [
+      "// Get first file from form field \"document\":",
+      "file, err := c.FormFile(\"${1:document}\")",
+      "if err != nil {",
+      "\treturn c.Status(fiber.StatusBadRequest).SendString(err.Error())",
+      "}",
+      "",
+      "// Save file to root directory:",
+      "if err := c.SaveFile(file, fmt.Sprintf(\"./%s\", file.Filename)); err != nil {",
+      "\treturn c.Status(fiber.StatusInternalServerError).SendString(err.Error())",
+      "}",
+      "",
+      "return c.SendString(\"File uploaded successfully!\")"
+    ],
+    "description": "Handle single file upload"
+  },
+  "Fiber JWT Middleware": {
+    "prefix": "fiber-jwt",
+    "body": [
+      "// import \"github.com/gofiber/contrib/jwt\"",
+      "app.Use(jwtware.New(jwtware.Config{",
+      "\tSigningKey: jwtware.SigningKey{Key: []byte(\"${1:YOUR_SECRET_KEY}\")},",
+      "\tErrorHandler: func(c *fiber.Ctx, err error) error {",
+      "\t\tif err.Error() == \"Missing or malformed JWT\" {",
+      "\t\t\treturn c.Status(fiber.StatusBadRequest).JSON(fiber.Map{\"error\": \"Missing or malformed JWT\"})",
+      "\t\t}",
+      "\t\treturn c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{\"error\": \"Invalid or expired JWT\"})",
+      "\t},",
+      "}))"
+    ],
+    "description": "JWT authentication middleware with custom error handler"
+  },
+  "Fiber Database Connection": {
+    "prefix": "fiber-db",
+    "body": [
+      "// import \"gorm.io/gorm\"",
+      "// import \"gorm.io/driver/${1:sqlite}\"",
+      "// Database setup",
+      "dsn := \"${2:test.db}\"",
+      "db, err := gorm.Open(${1}.Open(dsn), &gorm.Config{})",
+      "if err != nil {",
+      "\tlog.Fatal(\"Failed to connect to database: \", err)",
+      "}",
+      "",
+      "// Inject DB into context for handlers",
+      "app.Use(func(c *fiber.Ctx) error {",
+      "\tc.Locals(\"db\", db)",
+      "\treturn c.Next()",
+      "})"
+    ],
+    "description": "Database connection (GORM) with context injection"
+  },
+  "Fiber CORS Setup": {
+    "prefix": "fiber-cors",
+    "body": [
+      "// import \"github.com/gofiber/fiber/v2/middleware/cors\"",
+      "app.Use(cors.New(cors.Config{",
+      "\tAllowOrigins: \"${1:http://localhost:3000,https://gofiber.io}\",",
+      "\tAllowHeaders: \"Origin, Content-Type, Accept, Authorization\",",
+      "\tAllowMethods: \"GET,POST,HEAD,PUT,DELETE,PATCH\",",
+      "}))"
+    ],
+    "description": "CORS configuration for specific origins"
+  },
+  "Fiber Rate Limiter": {
+    "prefix": "fiber-limit",
+    "body": [
+      "// import \"github.com/gofiber/fiber/v2/middleware/limiter\"",
+      "app.Use(limiter.New(limiter.Config{",
+      "\tMax:        ${1:20},",
+      "\tExpiration: ${2:30} * time.Second,",
+      "\tKeyGenerator: func(c *fiber.Ctx) string {",
+      "\t\treturn c.IP() // Limit by IP address",
+      "\t},",
+      "\tLimitReached: func(c *fiber.Ctx) error {",
+      "\t\treturn c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{",
+      "\t\t\t\"error\": \"Too many requests, please try again later.\",",
+      "\t\t})",
+      "\t},",
+      "}))"
+    ],
+    "description": "Rate limiting middleware based on IP address"
+  },
+  "Fiber Health Check": {
+    "prefix": "fiber-health",
+    "body": [
+      "app.Get(\"/health\", func(c *fiber.Ctx) error {",
+      "\treturn c.Status(fiber.StatusOK).JSON(fiber.Map{",
+      "\t\t\"status\":  \"up\",",
+      "\t\t\"service\": \"${1:My Awesome Service}\",",
+      "\t})",
+      "})"
+    ],
+    "description": "Health check endpoint for monitoring"
+  },
+  "Fiber Websocket": {
+    "prefix": "fiber-ws",
+    "body": [
+      "// import \"github.com/gofiber/contrib/websocket\"",
+      "app.Get(\"/ws/:id\", websocket.New(func(c *websocket.Conn) {",
+      "\tlog.Println(\"New websocket connection:\", c.Params(\"id\"))",
+      "\tdefer func() {",
+      "\t\tlog.Println(\"Closing websocket connection:\", c.Params(\"id\"))",
+      "\t\tc.Close()",
+      "\t}()",
+      "",
+      "\tvar (",
+      "\t\tmt  int",
+      "\t\tmsg []byte",
+      "\t\terr error",
+      "\t)",
+      "\tfor {",
+      "\t\tif mt, msg, err = c.ReadMessage(); err != nil {",
+      "\t\t\tlog.Println(\"read:\", err)",
+      "\t\t\tbreak",
+      "\t\t}",
+      "\t\tlog.Printf(\"recv: %s\", msg)",
+      "",
+      "\t\tif err = c.WriteMessage(mt, msg); err != nil {",
+      "\t\t\tlog.Println(\"write:\", err)",
+      "\t\t\tbreak",
+      "\t\t}",
+      "\t}",
+      "}))"
+    ],
+    "description": "Websocket echo server handler"
+  },
+  "Fiber Shutdown": {
+    "prefix": "fiber-shutdown",
+    "body": [
+      "// Start server in a goroutine",
+      "go func() {",
+      "\tif err := app.Listen(\":${1:3000}\"); err != nil && err != http.ErrServerClosed {",
+      "\t\tlog.Fatalf(\"listen: %s\\n\", err)",
+      "\t}",
+      "}()",
+      "",
+      "// Graceful shutdown",
+      "quit := make(chan os.Signal, 1)",
+      "signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)",
+      "<-quit",
+      "log.Println(\"Shutting down server...\")",
+      "",
+      "if err := app.Shutdown(); err != nil {",
+      "\tlog.Fatal(\"Server forced to shutdown:\", err)",
+      "}",
+      "",
+      "log.Println(\"Server exiting\")"
+    ],
+    "description": "Graceful shutdown setup for production"
+  },
+  "Fiber Body Validation": {
+    "prefix": "fiber-body-validation",
+    "body": [
+      "// import \"github.com/go-playground/validator/v10\"",
+      "type ${1:CreateUserRequest} struct {",
+      "\tName  string `json:\"name\" validate:\"required,min=3,max=32\"`",
+      "\tEmail string `json:\"email\" validate:\"required,email\"`",
+      "}",
+      "",
+      "var validate = validator.New()",
+      "var body ${1}",
+      "",
+      "if err := c.BodyParser(&body); err != nil {",
+      "\treturn c.Status(fiber.StatusBadRequest).JSON(fiber.Map{\"error\": \"Cannot parse request body\"})",
+      "}",
+      "",
+      "if err := validate.Struct(&body); err != nil {",
+      "\t// This returns a detailed validation error message.",
+      "\treturn c.Status(fiber.StatusBadRequest).JSON(fiber.Map{\"error\": err.Error()})",
+      "}"
+    ],
+    "description": "Parse and validate request body using go-playground/validator"
+  },
+  "Fiber Generate JWT Token": {
+    "prefix": "fiber-jwt-generate",
+    "body": [
+      "// import \"github.com/golang-jwt/jwt/v5\"",
+      "// Create the claims",
+      "claims := jwt.MapClaims{",
+      "\t\"user_id\": ${1:123},",
+      "\t\"role\":    \"${2:admin}\",",
+      "\t\"exp\":     time.Now().Add(time.Hour * 72).Unix(),",
+      "}",
+      "",
+      "// Create token",
+      "token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)",
+      "",
+      "// Generate encoded token and send it as response.",
+      "t, err := token.SignedString([]byte(\"${3:YOUR_SECRET_KEY}\"))",
+      "if err != nil {",
+      "\treturn c.SendStatus(fiber.StatusInternalServerError)",
+      "}",
+      "",
+      "return c.JSON(fiber.Map{\"token\": t})"
+    ],
+    "description": "Generate a JWT token using golang-jwt"
+  },
+  "Fiber Recover Middleware": {
+    "prefix": "fiber-middleware-recover",
+    "body": [
+      "// import \"github.com/gofiber/fiber/v2/middleware/recover\"",
+      "app.Use(recover.New())"
+    ],
+    "description": "Add Recover middleware to catch panics and prevent server crash"
+  },
+  "Fiber Request ID Middleware": {
+    "prefix": "fiber-middleware-requestid",
+    "body": [
+      "// import \"github.com/gofiber/fiber/v2/middleware/requestid\"",
+      "app.Use(requestid.New())"
+    ],
+    "description": "Add Request ID middleware for tracing and logging"
+  },
+  "Fiber Compress Middleware": {
+    "prefix": "fiber-middleware-compress",
+    "body": [
+      "// import \"github.com/gofiber/fiber/v2/middleware/compress\"",
+      "app.Use(compress.New(compress.Config{",
+      "\tLevel: compress.LevelBestSpeed, // or LevelBestCompression",
+      "}))"
+    ],
+    "description": "Add Compress middleware (gzip, brotli, deflate) for responses"
+  },
+  "Fiber Get DB from Context": {
+    "prefix": "fiber-db-use",
+    "body": [
+      "// Assuming DB is set in a middleware with c.Locals(\"db\", db)",
+      "db := c.Locals(\"db\").(*gorm.DB)",
+      "",
+      "var user ${1:User}",
+      "if err := db.First(&user, c.Params(\"id\")).Error; err != nil {",
+      "\treturn c.Status(fiber.StatusNotFound).JSON(fiber.Map{\"error\": \"User not found\"})",
+      "}",
+      "",
+      "return c.JSON(user)"
+    ],
+    "description": "Get GORM database instance from context within a handler"
+  },
+  "Fiber HTML Template Engine": {
+    "prefix": "fiber-template-html",
+    "body": [
+      "// import \"github.com/gofiber/template/html/v2\"",
+      "// Initialize template engine",
+      "engine := html.New(\"./${1:views}\", \".${2:html}\")",
+      "",
+      "app := fiber.New(fiber.Config{",
+      "\tViews: engine,",
+      "})",
+      "",
+      "app.Get(\"/\", func(c *fiber.Ctx) error {",
+      "\t// Render a template",
+      "\treturn c.Render(\"index\", fiber.Map{",
+      "\t\t\"Title\": \"${3:Hello, World!}\",",
+      "\t})",
+      "})"
+    ],
+    "description": "Setup and use HTML template engine"
+  },
+  "Fiber Handler Testing": {
+    "prefix": "fiber-test-handler",
+    "body": [
+      "// import \"net/http/httptest\"",
+      "// import \"testing\"",
+      "// import \"github.com/stretchr/testify/assert\"",
+      "func Test${1:MyHandler}(t *testing.T) {",
+      "\tapp := fiber.New()",
+      "\tapp.Get(\"/${2:test}\", func(c *fiber.Ctx) error {",
+      "\t\treturn c.SendString(\"hello world\")",
+      "\t})",
+      "",
+      "\treq := httptest.NewRequest(\"GET\", \"/${2:test}\", nil)",
+      "\tresp, _ := app.Test(req)",
+      "",
+      "\tassert.Equal(t, 200, resp.StatusCode)",
+      "",
+      "\tbody, _ := io.ReadAll(resp.Body)",
+      "\tassert.Equal(t, \"hello world\", string(body))",
+      "}"
+    ],
+    "description": "Unit test for a Fiber handler using httptest"
+  },
+  "Fiber Optional Path Param": {
+    "prefix": "fiber-param-optional",
+    "body": [
+      "app.Get(\"/user/:name?\", func(c *fiber.Ctx) error {",
+      "\tname := c.Params(\"name\", \"${1:Guest}\") // Provides a default value",
+      "\treturn c.SendString(\"Hello, \" + name)",
+      "})"
+    ],
+    "description": "Handle an optional path parameter with a default value"
+  },
+
+  "Fiber Wildcard Path Param": {
+    "prefix": "fiber-param-wildcard",
+    "body": [
+      "// Matches /api/v1/users, /api/v1/products, etc.",
+      "app.Get(\"/api/v1/*\", func(c *fiber.Ctx) error {",
+      "\tpath := c.Params(\"*\") // path will be 'users' or 'products'",
+      "\treturn c.SendString(\"You requested path: \" + path)",
+      "})"
+    ],
+    "description": "Handle a wildcard path parameter"
+  },
+  "Fiber Cookie Management": {
+    "prefix": "fiber-cookie",
+    "body": [
+      "// To set a cookie",
+      "c.Cookie(&fiber.Cookie{",
+      "\tName:     \"${1:token}\",",
+      "\tValue:    \"${2:some_secret_value}\",",
+      "\tExpires:  time.Now().Add(24 * time.Hour),",
+      "\tHTTPOnly: true,",
+      "\tSameSite: \"lax\",",
+      "})",
+      "",
+      "// To get a cookie",
+      "tokenValue := c.Cookies(\"${1:token}\")",
+      "",
+      "// To clear a cookie",
+      "c.ClearCookie(\"${1:token}\")"
+    ],
+    "description": "Set, get, and clear HTTP cookies"
+  },
+  "Fiber File Download": {
+    "prefix": "fiber-download",
+    "body": [
+      "return c.Download(\"./files/${1:report.pdf}\", \"${2:user-report.pdf}\")"
+    ],
+    "description": "Serve a file for download with an optional custom filename"
+  },
+  "Fiber Redirect": {
+    "prefix": "fiber-redirect",
+    "body": [
+      "return c.Redirect(\"${1:/new-location}\", fiber.StatusMovedPermanently) // 301"
+    ],
+    "description": "Redirect a request to a new URL"
+  },
+  "Fiber Group with Middleware": {
+    "prefix": "fiber-group-middleware",
+    "body": [
+      "// This middleware will only apply to routes in the 'admin' group",
+      "func AdminAuth(c *fiber.Ctx) error {",
+      "\t// Your authentication logic here",
+      "\tif c.Get(\"X-Api-Key\") != \"secret-admin-key\" {",
+      "\t\treturn fiber.ErrUnauthorized",
+      "\t}",
+      "\treturn c.Next()",
+      "}",
+      "",
+      "admin := app.Group(\"/${1:admin}\", AdminAuth)",
+      "",
+      "admin.Get(\"/dashboard\", func(c *fiber.Ctx) error {",
+      "\treturn c.SendString(\"Welcome, Admin!\")",
+      "})"
+    ],
+    "description": "Apply middleware to a specific group of routes"
+  },
+  "Fiber Get/Set Headers": {
+    "prefix": "fiber-header",
+    "body": [
+      "// Get a request header",
+      "userAgent := c.Get(\"User-Agent\")",
+      "apiKey := c.Get(\"X-API-KEY\")",
+      "",
+      "// Set a response header",
+      "c.Set(\"X-Custom-Header\", \"${1:my-value}\")",
+      "",
+      "return c.SendString(\"Your User-Agent is: \" + userAgent)"
+    ],
+    "description": "Get request headers and set response headers"
+  },
+  "Fiber Config from Environment": {
+    "prefix": "fiber-config-env",
+    "body": [
+      "// Set environment variables before running:",
+      "// export APP_PORT=8080",
+      "// export APP_NAME=MyProdApp",
+      "port := os.Getenv(\"APP_PORT\")",
+      "if port == \"\" {",
+      "\tport = \"${1:3000}\" // Default port",
+      "}",
+      "",
+      "app := fiber.New(fiber.Config{",
+      "\tAppName: os.Getenv(\"APP_NAME\"),",
+      "})",
+      "",
+      "log.Fatal(app.Listen(\":\" + port))"
+    ],
+    "description": "Load configuration from environment variables"
+  },
+  "Fiber Server-Sent Events (SSE)": {
+    "prefix": "fiber-sse",
+    "body": [
+      "// import \"bufio\"",
+      "// import \"fmt\"",
+      "// import \"github.com/valyala/fasthttp\"",
+      "app.Get(\"/sse\", func(c *fiber.Ctx) error {",
+      "\tc.Set(\"Content-Type\", \"text/event-stream\")",
+      "\tc.Set(\"Cache-Control\", \"no-cache\")",
+      "\tc.Set(\"Connection\", \"keep-alive\")",
+      "\tc.Set(\"Transfer-Encoding\", \"chunked\")",
+      "",
+      "\tc.Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {",
+      "\t\tfmt.Println(\"SSE: Writer started\")",
+      "\t\tfor i := 0; i < 10; i++ {",
+      "\t\t\tmsg := fmt.Sprintf(\"data: Message %d\\n\\n\", i)",
+      "\t\t\tfmt.Fprint(w, msg)",
+      "\t\t\tw.Flush()",
+      "\t\t\ttime.Sleep(1 * time.Second)",
+      "\t\t}",
+      "\t\tfmt.Println(\"SSE: Writer finished\")",
+      "\t}))",
+      "",
+      "\treturn nil",
+      "})"
+    ],
+    "description": "Create a Server-Sent Events (SSE) endpoint"
+  },
+  "Fiber Get User from JWT": {
+    "prefix": "fiber-jwt-getuser",
+    "body": [
+      "// import \"github.com/golang-jwt/jwt/v5\"",
+      "// This handler should be protected by the JWT middleware",
+      "user := c.Locals(\"user\").(*jwt.Token)",
+      "claims := user.Claims.(jwt.MapClaims)",
+      "userId := claims[\"user_id\"].(float64) // JWT numbers are float64",
+      "role := claims[\"role\"].(string)",
+      "",
+      "return c.JSON(fiber.Map{",
+      "\t\"message\": fmt.Sprintf(\"Welcome user %.0f with role %s\", userId, role),",
+      "})"
+    ],
+    "description": "Get user claims from a JWT token in a protected handler"
+  },
+  "Fiber Next with Locals": {
+    "prefix": "fiber-middleware-next-locals",
+    "body": [
+      "// Middleware to set a value",
+      "app.Use(func(c *fiber.Ctx) error {",
+      "\tc.Locals(\"request_id\", \"${1:unique-id-123}\")",
+      "\treturn c.Next()",
+      "})",
+      "",
+      "// Handler to get the value",
+      "app.Get(\"/\", func(c *fiber.Ctx) error {",
+      "\trequestID := c.Locals(\"request_id\").(string)",
+      "\treturn c.SendString(\"Request ID: \" + requestID)",
+      "})"
+    ],
+    "description": "Pass data from a middleware to a handler using c.Locals"
+  },
+  "Fiber Multi-file Upload": {
+    "prefix": "fiber-upload-multi",
+    "body": [
+      "form, err := c.MultipartForm()",
+      "if err != nil {",
+      "\treturn err",
+      "}",
+      "// Get all files from field \"documents\":",
+      "files := form.File[\"${1:documents}\"]",
+      "",
+      "for _, file := range files {",
+      "\tfmt.Println(file.Filename, file.Size, file.Header[\"Content-Type\"][0])",
+      "\t// Save the files to disk:",
+      "\tif err := c.SaveFile(file, fmt.Sprintf(\"./%s\", file.Filename)); err != nil {",
+      "\t\treturn err",
+      "\t}",
+      "}",
+      "return c.SendString(\"Uploaded all files successfully!\")"
+    ],
+    "description": "Handle multiple file uploads from a single form field"
+  }
+}

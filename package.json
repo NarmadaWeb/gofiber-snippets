@@ -1,0 +1,21 @@
+{
+  "name": "gofiber-snippets",
+  "displayName": "gofiber snippets",
+  "description": "gofiber snippets v2",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Snippets"
+  ],
+  "contributes": {
+    "snippets": [
+      {
+        "language": "go",
+        "path": "./snippets/go.json"
+      }
+    ]
+  },
+  "icon": "logo.png"
+}
