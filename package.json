@@ -1,7 +1,7 @@
 {
   "name": "gofiber-snippets",
   "displayName": "Gofiber snippets",
-  "description": "Gofiber snippets v2 for users go",
+  "description": "fiber snippets v2 for users go",
   "version": "0.1.0",
   "publisher": "RajaSunrise",
   "engines": {
